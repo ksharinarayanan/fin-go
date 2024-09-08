@@ -21,3 +21,8 @@ type MfNavDatum struct {
 	NavDate  pgtype.Date
 	Nav      pgtype.Numeric
 }
+
+type MfScheme struct {
+	ID         int32
+	SchemeName pgtype.Text
+}

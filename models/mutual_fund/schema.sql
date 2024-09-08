@@ -1,3 +1,8 @@
+create table mf_schemes (
+	id int primary key,
+	scheme_name varchar(512)
+);
+
 create table mf_investments (
 	id serial primary key,
 	scheme_id int,

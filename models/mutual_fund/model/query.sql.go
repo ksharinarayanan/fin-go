@@ -81,13 +81,37 @@ func (q *Queries) ListMFNavData(ctx context.Context, arg ListMFNavDataParams) (M
 	return i, err
 }
 
-const listMFNavDataBySchemeId = `-- name: ListMFNavDataBySchemeId :one
-SELECT scheme_id, nav_date, nav FROM mf_nav_data WHERE scheme_id = $1
+const listMFNavDataBySchemeId = `-- name: ListMFNavDataBySchemeId :many
+SELECT scheme_id, nav_date, nav FROM mf_nav_data WHERE scheme_id = $1 ORDER BY nav_date DESC
 `
 
-func (q *Queries) ListMFNavDataBySchemeId(ctx context.Context, schemeID int32) (MfNavDatum, error) {
-	row := q.db.QueryRow(ctx, listMFNavDataBySchemeId, schemeID)
-	var i MfNavDatum
-	err := row.Scan(&i.SchemeID, &i.NavDate, &i.Nav)
+func (q *Queries) ListMFNavDataBySchemeId(ctx context.Context, schemeID int32) ([]MfNavDatum, error) {
+	rows, err := q.db.Query(ctx, listMFNavDataBySchemeId, schemeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MfNavDatum
+	for rows.Next() {
+		var i MfNavDatum
+		if err := rows.Scan(&i.SchemeID, &i.NavDate, &i.Nav); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listMFSchemeById = `-- name: ListMFSchemeById :one
+SELECT id, scheme_name FROM mf_schemes WHERE id = $1
+`
+
+func (q *Queries) ListMFSchemeById(ctx context.Context, id int32) (MfScheme, error) {
+	row := q.db.QueryRow(ctx, listMFSchemeById, id)
+	var i MfScheme
+	err := row.Scan(&i.ID, &i.SchemeName)
 	return i, err
 }
