@@ -5,11 +5,13 @@ import (
 	"fund-manager/db"
 	"fund-manager/internal/utils"
 	mutual_fund "fund-manager/models/mutual_fund/model"
-	"log"
+	"net/http"
 	"time"
+
+	"github.com/labstack/echo/v4"
 )
 
-type MutualFundResponse struct {
+type MFInvestment struct {
 	// all the values and P/L percentages are derived values
 	// they can be computed in the client as well
 	// TODO: is it better to offload that to client?
@@ -31,77 +33,75 @@ type MutualFundResponse struct {
 	DayProfitLoss           float64 `json:"day_profit_loss"`
 }
 
-type ResponseObject struct {
-	MutualFunds []MutualFundResponse `json:"mutual_funds"`
+type MFInvestmentsApiResponse struct {
+	MutualFunds []MFInvestment `json:"mutual_funds"`
 }
 
-func ListAllMfData() {
+// returns all the data related to MF investments
+func BaseRouteHandler(c echo.Context) error {
+	mfInvestmentsApiResponse := listAllMfInvestments()
+
+	return c.JSON(http.StatusOK, mfInvestmentsApiResponse)
+}
+
+// return the JSON response to be returned
+func listAllMfInvestments() MFInvestmentsApiResponse {
 	mfQueries := mutual_fund.New(db.DB_CONN)
 	mfInvestments, err := mfQueries.ListMFInvestments(context.Background())
 	utils.CheckAndLogError(err, "")
 
+	var mfInvestmentsApiResponse MFInvestmentsApiResponse
+
 	for i := range mfInvestments {
 		mfInvestment := mfInvestments[i]
+		mfInvestmentResponse := constructMfInvestmentResponse(mfInvestment, mfQueries)
 
-		schemeId := int(mfInvestment.SchemeID.Int32)
-
-		var mfResponse MutualFundResponse
-		mfResponse.SchemeId = schemeId
-
-		mfScheme, err := mfQueries.ListMFSchemeById(context.Background(), int32(schemeId))
-		utils.CheckAndLogError(err, "")
-
-		mfResponse.SchemeName = mfScheme.SchemeName.String
-
-		mfResponse.Units, err = utils.PgNumericToFloat64(mfInvestment.Units)
-		utils.CheckAndLogError(err, "")
-
-		mfResponse.InvestedAt = mfInvestment.InvestedAt.Time
-
-		// get current navs from mf_nav_date table for the previous two days
-		// this data is sorted by nav_date, so the first element is the previous day
-		navDatas, err := mfQueries.ListMFNavDataBySchemeId(context.Background(), int32(schemeId))
-		utils.CheckAndLogError(err, "")
-
-		mfResponse.CurrentNav, err = utils.PgNumericToFloat64(navDatas[0].Nav)
-		utils.CheckAndLogError(err, "")
-		mfResponse.CurrentValue = utils.RoundFloat64(mfResponse.CurrentNav*mfResponse.Units, NET_VALUE_ROUNDING_FACTOR)
-
-		mfResponse.InvestedNav, err = utils.PgNumericToFloat64(mfInvestment.Nav)
-		utils.CheckAndLogError(err, "")
-		mfResponse.InvestedValue = utils.RoundFloat64(mfResponse.InvestedNav*mfResponse.Units, NET_VALUE_ROUNDING_FACTOR)
-
-		mfResponse.PreviousDayNav, err = utils.PgNumericToFloat64(navDatas[1].Nav)
-		utils.CheckAndLogError(err, "")
-		mfResponse.PreviousDayValue = utils.RoundFloat64(mfResponse.PreviousDayNav*mfResponse.Units, NET_VALUE_ROUNDING_FACTOR)
-
-		mfResponse.NetProfitLoss, mfResponse.NetProfitLossPercentage = calculateProfitLoss(mfResponse.InvestedValue, mfResponse.CurrentValue)
-		mfResponse.DayProfitLoss, mfResponse.DayProfitLossPercentage = calculateProfitLoss(mfResponse.PreviousDayValue, mfResponse.CurrentValue)
-
-		print(mfResponse)
+		mfInvestmentsApiResponse.MutualFunds = append(mfInvestmentsApiResponse.MutualFunds, mfInvestmentResponse)
 	}
 
+	return mfInvestmentsApiResponse
+}
+
+func constructMfInvestmentResponse(mfInvestment mutual_fund.MfInvestment, mfQueries *mutual_fund.Queries) MFInvestment {
+	schemeId := int(mfInvestment.SchemeID.Int32)
+	var mfInvestmentResponse MFInvestment
+	mfInvestmentResponse.SchemeId = schemeId
+
+	mfScheme, err := mfQueries.ListMFSchemeById(context.Background(), int32(schemeId))
+	utils.CheckAndLogError(err, "")
+
+	mfInvestmentResponse.SchemeName = mfScheme.SchemeName.String
+
+	mfInvestmentResponse.Units, err = utils.PgNumericToFloat64(mfInvestment.Units)
+	utils.CheckAndLogError(err, "")
+
+	mfInvestmentResponse.InvestedAt = mfInvestment.InvestedAt.Time
+
+	// get current navs from mf_nav_date table for the previous two days
+	// this data is sorted by nav_date, so the first element is the previous day
+	navDatas, err := mfQueries.ListMFNavDataBySchemeId(context.Background(), int32(schemeId))
+	utils.CheckAndLogError(err, "")
+
+	mfInvestmentResponse.CurrentNav, err = utils.PgNumericToFloat64(navDatas[0].Nav)
+	utils.CheckAndLogError(err, "")
+	mfInvestmentResponse.CurrentValue = utils.RoundFloat64(mfInvestmentResponse.CurrentNav*mfInvestmentResponse.Units, NET_VALUE_ROUNDING_FACTOR)
+
+	mfInvestmentResponse.InvestedNav, err = utils.PgNumericToFloat64(mfInvestment.Nav)
+	utils.CheckAndLogError(err, "")
+	mfInvestmentResponse.InvestedValue = utils.RoundFloat64(mfInvestmentResponse.InvestedNav*mfInvestmentResponse.Units, NET_VALUE_ROUNDING_FACTOR)
+
+	mfInvestmentResponse.PreviousDayNav, err = utils.PgNumericToFloat64(navDatas[1].Nav)
+	utils.CheckAndLogError(err, "")
+	mfInvestmentResponse.PreviousDayValue = utils.RoundFloat64(mfInvestmentResponse.PreviousDayNav*mfInvestmentResponse.Units, NET_VALUE_ROUNDING_FACTOR)
+
+	mfInvestmentResponse.NetProfitLoss, mfInvestmentResponse.NetProfitLossPercentage = calculateProfitLoss(mfInvestmentResponse.InvestedValue, mfInvestmentResponse.CurrentValue)
+	mfInvestmentResponse.DayProfitLoss, mfInvestmentResponse.DayProfitLossPercentage = calculateProfitLoss(mfInvestmentResponse.PreviousDayValue, mfInvestmentResponse.CurrentValue)
+
+	return mfInvestmentResponse
 }
 
 // returns the P/L actual value, percentage rounded to 2 decimal places
 func calculateProfitLoss(investedValue float64, currentValue float64) (float64, float64) {
 	diff := currentValue - investedValue
 	return utils.RoundFloat64(diff, PROFIT_LOSS_ROUNDING_FACTOR), utils.RoundFloat64(diff/investedValue*100, PROFIT_LOSS_ROUNDING_FACTOR)
-}
-
-func print(mfResponse MutualFundResponse) {
-	log.Printf("Scheme ID: %v\n", mfResponse.SchemeId)
-	log.Printf("Scheme Name: %v\n", mfResponse.SchemeName)
-	log.Printf("Units: %v\n", mfResponse.Units)
-	log.Printf("Invested At: %v\n", mfResponse.InvestedAt)
-	log.Printf("Current NAV: %v\n", mfResponse.CurrentNav)
-	log.Printf("Current Value: %v\n", mfResponse.CurrentValue)
-	log.Printf("Invested NAV: %v\n", mfResponse.InvestedNav)
-	log.Printf("Invested Value: %v\n", mfResponse.InvestedValue)
-	log.Printf("Previous Day NAV: %v\n", mfResponse.PreviousDayNav)
-	log.Printf("Previous Day Value: %v\n", mfResponse.PreviousDayValue)
-	log.Printf("Net Profit/Loss: %v\n", mfResponse.NetProfitLoss)
-	log.Printf("Day Profit/Loss: %v\n", mfResponse.DayProfitLoss)
-	log.Printf("Net Profit/Loss Percentage: %v\n", mfResponse.NetProfitLossPercentage)
-	log.Printf("Day Profit/Loss Percentage: %v\n", mfResponse.DayProfitLossPercentage)
 }
