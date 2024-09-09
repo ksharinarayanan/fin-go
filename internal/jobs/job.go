@@ -24,7 +24,7 @@ func UpdateMfNavData() {
 
 	for i := range mfInvestments {
 		// remove any existing data for the scheme ID
-		mfQueries.CleanupMFNavDataBySchemeId(context.Background(), mfInvestments[0].SchemeID.Int32)
+		mfQueries.CleanupMFNavDataBySchemeId(context.Background(), mfInvestments[i].SchemeID.Int32)
 		mf.PopulateData(mfQueries, mfInvestments[i])
 	}
 

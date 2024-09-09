@@ -1,6 +1,9 @@
 -- name: ListMFSchemeById :one
 SELECT * FROM mf_schemes WHERE id = $1;
 
+-- name: AddMFScheme :exec
+INSERT INTO mf_schemes (id, scheme_name) VALUES ($1, $2);
+
 -- name: ListMFInvestments :many
 SELECT * FROM mf_investments;
 

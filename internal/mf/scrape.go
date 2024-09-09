@@ -2,83 +2,75 @@ package mf
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"fund-manager/db"
 	"fund-manager/internal/utils"
 	mutual_fund "fund-manager/models/mutual_fund/model"
 	"log"
-	"strconv"
+	"net/http"
+	"sync"
 	"time"
-
-	"github.com/jackc/pgx/v5"
 )
 
-func Scrape() {
-	// jobs.UpdateMfNavData()
-	// var mfQueries *mutual_fund.Queries = mutual_fund.New(db.DB_CONN)
-
-	// mfInvestments, err := mfQueries.ListMFInvestments(context.Background())
-	// utils.CheckAndLogError(err, "")
-
-	// for i := range mfInvestments {
-	// 	processScheme(mfInvestments[i])
-	// }
+type SchemeDataResponse struct {
+	SchemeCode int    `json:"schemeCode"`
+	SchemeName string `json:"schemeName"`
 }
 
-func processScheme(mfInvestment mutual_fund.MfInvestment) {
-	schemeId := int(mfInvestment.SchemeID.Int32)
-
-	log.Printf("Processing scheme ID %v\n", schemeId)
-
-	mfResponse := apiRequest(schemeId, true)
-
-	var navDatas []NavData = mfResponse.Data
-
-	nav, err := utils.PgNumericToFloat64(mfInvestment.Nav)
-	utils.CheckAndLogError(err, "")
-	units, err := utils.PgNumericToFloat64(mfInvestment.Units)
-	utils.CheckAndLogError(err, "")
-	navToday, err := strconv.ParseFloat(navDatas[0].Nav, 64)
-	utils.CheckAndLogError(err, "")
-
-	investedValue := utils.RoundFloat64(nav*units, 3)
-	currentValue := utils.RoundFloat64(navToday*units, 3)
-
-	compareToYesterday(schemeId, units, currentValue)
-
-	log.Printf("Net P/L: %v\n", compareChangeInPercentage(investedValue, currentValue))
-}
-
-func compareChangeInPercentage(investedValue float64, currentValue float64) float32 {
-	differenceInValue := currentValue - investedValue
-
-	return float32(utils.RoundFloat64((differenceInValue/investedValue)*100, 2))
-}
-
-func compareToYesterday(schemeId int, units float64, investedValue float64) {
-	var mfQueries *mutual_fund.Queries = mutual_fund.New(db.DB_CONN)
-
-	yesterday := time.Now().AddDate(0, 0, -1)
-	yesterdaysNavData, err := mfQueries.ListMFNavData(context.Background(), mutual_fund.ListMFNavDataParams{
-		SchemeID: int32(schemeId),
-		NavDate:  utils.TimeToPgDate(yesterday),
-	})
-
+// this function is just to populate mf_schemes table
+// this is only a one time activity
+func ScrapeSchemeMetaData() {
+	response, err := http.Get("https://api.mfapi.in/mf")
 	if err != nil {
-		if err == pgx.ErrNoRows {
-			log.Printf("No matching rows found for scheme ID %v and date %v", schemeId, yesterday)
-			return
-		}
-		utils.CheckAndLogError(err, "")
+		fmt.Println(err)
+		return
+	}
+	defer response.Body.Close()
+
+	var schemeDatas []SchemeDataResponse
+	err = json.NewDecoder(response.Body).Decode(&schemeDatas)
+	if err != nil {
+		fmt.Println(err)
 		return
 	}
 
-	nav, err := yesterdaysNavData.Nav.Float64Value()
-	utils.CheckAndLogError(err, "")
+	mfQueries := mutual_fund.New(db.DB_CONN)
 
-	yesterdaysValue := nav.Float64 * units
+	var wg sync.WaitGroup
+	var mutex sync.Mutex
+	wg.Add(len(schemeDatas))
 
-	change := compareChangeInPercentage(yesterdaysValue, investedValue)
+	counter := 0
 
-	log.Println(change)
+	start := time.Now()
 
+	for i := range schemeDatas {
+		schemeData := schemeDatas[i]
+		go func() {
+			err := mfQueries.AddMFScheme(context.Background(), mutual_fund.AddMFSchemeParams{
+				ID:         int32(schemeData.SchemeCode),
+				SchemeName: utils.StringToPgText(schemeData.SchemeName),
+			})
+
+			if err != nil {
+				//fmt.Printf("Error inserting scheme %v: %v\n", schemeData.SchemeCode, err.Error())
+			}
+
+			mutex.Lock()
+			counter++
+			if counter%100 == 0 {
+				log.Printf("Processed %v records\n", counter)
+			}
+			mutex.Unlock()
+
+			wg.Done()
+		}()
+	}
+
+	wg.Wait()
+
+	elapsed := time.Since(start)
+
+	log.Printf("Processed in %v\n", elapsed)
 }

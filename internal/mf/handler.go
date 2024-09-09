@@ -10,6 +10,9 @@ import (
 )
 
 type MutualFundResponse struct {
+	// all the values and P/L percentages are derived values
+	// they can be computed in the client as well
+	// TODO: is it better to offload that to client?
 	SchemeId                int       `json:"scheme_id"`
 	SchemeName              string    `json:"scheme_name"`
 	Units                   float64   `json:"units"`

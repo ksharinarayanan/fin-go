@@ -28,3 +28,10 @@ func Float64ToPgNumeric(val float64) pgtype.Numeric {
 	}
 	return result
 }
+
+func StringToPgText(val string) pgtype.Text {
+	return pgtype.Text{
+		String: val,
+		Valid:  true,
+	}
+}

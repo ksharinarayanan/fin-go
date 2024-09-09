@@ -26,6 +26,20 @@ func (q *Queries) AddMFNavData(ctx context.Context, arg AddMFNavDataParams) erro
 	return err
 }
 
+const addMFScheme = `-- name: AddMFScheme :exec
+INSERT INTO mf_schemes (id, scheme_name) VALUES ($1, $2)
+`
+
+type AddMFSchemeParams struct {
+	ID         int32
+	SchemeName pgtype.Text
+}
+
+func (q *Queries) AddMFScheme(ctx context.Context, arg AddMFSchemeParams) error {
+	_, err := q.db.Exec(ctx, addMFScheme, arg.ID, arg.SchemeName)
+	return err
+}
+
 const cleanupMFNavDataBySchemeId = `-- name: CleanupMFNavDataBySchemeId :exec
 DELETE FROM mf_nav_data WHERE scheme_id = $1
 `
