@@ -18,15 +18,17 @@ type MutualFundResponse struct {
 	Units                   float64   `json:"units"`
 	InvestedAt              time.Time `json:"invested_at"`
 	CurrentNav              float64   `json:"current_nav"`
-	CurrentValue            float64   `json:"current_value"`
 	InvestedNav             float64   `json:"invested_nav"`
-	InvestedValue           float64   `json:"invested_value"`
 	PreviousDayNav          float64   `json:"previous_day_nav"`
-	PreviousDayValue        float64   `json:"previous_day_value"`
 	NetProfitLossPercentage float64   `json:"net_profit_loss_percentage"`
-	DayProfitLossPercentage float64   `json:"day_profit_loss_percentage"`
-	NetProfitLoss           float64   `json:"net_profit_loss"`
-	DayProfitLoss           float64   `json:"day_profit_loss"`
+
+	// these are derived values
+	CurrentValue            float64 `json:"current_value"`
+	InvestedValue           float64 `json:"invested_value"`
+	PreviousDayValue        float64 `json:"previous_day_value"`
+	DayProfitLossPercentage float64 `json:"day_profit_loss_percentage"`
+	NetProfitLoss           float64 `json:"net_profit_loss"`
+	DayProfitLoss           float64 `json:"day_profit_loss"`
 }
 
 type ResponseObject struct {
