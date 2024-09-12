@@ -35,3 +35,10 @@ func StringToPgText(val string) pgtype.Text {
 		Valid:  true,
 	}
 }
+
+func IntToPgInt4(val int) pgtype.Int4 {
+	return pgtype.Int4{
+		Int32: int32(val),
+		Valid: true,
+	}
+}

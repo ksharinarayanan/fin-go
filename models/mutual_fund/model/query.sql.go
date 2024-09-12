@@ -79,6 +79,36 @@ func (q *Queries) ListMFInvestments(ctx context.Context) ([]MfInvestment, error)
 	return items, nil
 }
 
+const listMFInvestmentsBySchemeId = `-- name: ListMFInvestmentsBySchemeId :many
+SELECT id, scheme_id, nav, units, invested_at FROM mf_investments WHERE scheme_id = $1
+`
+
+func (q *Queries) ListMFInvestmentsBySchemeId(ctx context.Context, schemeID pgtype.Int4) ([]MfInvestment, error) {
+	rows, err := q.db.Query(ctx, listMFInvestmentsBySchemeId, schemeID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []MfInvestment
+	for rows.Next() {
+		var i MfInvestment
+		if err := rows.Scan(
+			&i.ID,
+			&i.SchemeID,
+			&i.Nav,
+			&i.Units,
+			&i.InvestedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMFNavData = `-- name: ListMFNavData :one
 SELECT scheme_id, nav_date, nav FROM mf_nav_data WHERE scheme_id = $1 AND nav_date = $2
 `
