@@ -13,7 +13,7 @@ import (
 
 // returns all the data related to MF investments
 func BaseRouteHandler(c echo.Context) error {
-	mfInvestmentsApiResponse := listAllMfInvestments()
+	mfInvestmentsApiResponse := getAllInvestments()
 
 	return c.JSON(http.StatusOK, mfInvestmentsApiResponse)
 }
@@ -23,8 +23,14 @@ func GetMfInvestmentHandler(c echo.Context) error {
 	schemeId, err := strconv.Atoi(schemeIdParam)
 	utils.CheckAndLogError(err, "")
 
+	response := getInvestmentsBySchemeId(schemeId)
+
+	return c.JSON(http.StatusOK, response)
+}
+
+func getInvestmentsBySchemeId(schemeId int) InvestmentsBySchemeIdResponse {
 	ctx := context.Background()
-	var response MFInvestmentBySchemeIdResponse
+	var response InvestmentsBySchemeIdResponse
 
 	mfQueries := mutual_fund.New(db.DB_CONN)
 	mfScheme, err := mfQueries.ListMFSchemeById(ctx, int32(schemeId))
@@ -33,52 +39,71 @@ func GetMfInvestmentHandler(c echo.Context) error {
 	response.SchemeId = int(mfScheme.ID)
 	response.SchemeName = mfScheme.SchemeName.String
 
-	mfNavData, err := mfQueries.ListMFNavDataBySchemeId(context.Background(), int32(schemeId))
+	navData, err := mfQueries.ListMFNavDataBySchemeId(context.Background(), int32(schemeId))
 	utils.CheckAndLogError(err, "")
 
-	response.CurrentNav, err = utils.PgNumericToFloat64(mfNavData[0].Nav)
+	response.CurrentNav, err = utils.PgNumericToFloat64(navData[0].Nav)
 	utils.CheckAndLogError(err, "")
 
-	response.PreviousDayNav, err = utils.PgNumericToFloat64(mfNavData[1].Nav)
+	response.PreviousDayNav, err = utils.PgNumericToFloat64(navData[1].Nav)
 	utils.CheckAndLogError(err, "")
 
-	mfInvestments, err := mfQueries.ListMFInvestmentsBySchemeId(ctx, utils.IntToPgInt4(schemeId))
+	investments, err := mfQueries.ListMFInvestmentsBySchemeId(ctx, utils.IntToPgInt4(schemeId))
 	utils.CheckAndLogError(err, "")
 
-	response.Investments = constructMfDataForSchemeId(response, mfInvestments)
+	response.Investments = constructInvestmentsForSchemeId(response, investments)
 
-	return c.JSON(http.StatusOK, response)
+	return response
 }
 
-func constructMfDataForSchemeId(response MFInvestmentBySchemeIdResponse, mfinvestments []mutual_fund.MfInvestment) []MFDataForSchemeId {
-	var mfDatumForSchemeId []MFDataForSchemeId
+func constructInvestmentsForSchemeId(response InvestmentsBySchemeIdResponse, investments []mutual_fund.MfInvestment) []InvestmentsForSchemeId {
+	var datumForSchemeId []InvestmentsForSchemeId
 
-	for _, mfInvestment := range mfinvestments {
+	for _, investment := range investments {
 		var (
-			mfDataForSchemeId MFDataForSchemeId
-			err               error
+			investmentsForSchemeId InvestmentsForSchemeId
+			err                    error
 		)
 
-		mfDataForSchemeId.Units, err = utils.PgNumericToFloat64(mfInvestment.Units)
+		investmentsForSchemeId.Units, err = utils.PgNumericToFloat64(investment.Units)
 		utils.CheckAndLogError(err, "")
 
-		mfDataForSchemeId.InvestedAt = mfInvestment.InvestedAt.Time
-		mfDataForSchemeId.InvestedNav, err = utils.PgNumericToFloat64(mfInvestment.Nav)
+		investmentsForSchemeId.InvestedAt = investment.InvestedAt.Time
+		investmentsForSchemeId.InvestedNav, err = utils.PgNumericToFloat64(investment.Nav)
 		utils.CheckAndLogError(err, "")
 
 		// derived values
-		mfDataForSchemeId.CurrentValue = utils.RoundFloat64(response.CurrentNav*mfDataForSchemeId.Units, NET_VALUE_ROUNDING_FACTOR)
-		mfDataForSchemeId.InvestedValue = utils.RoundFloat64(mfDataForSchemeId.InvestedNav*mfDataForSchemeId.Units, NET_VALUE_ROUNDING_FACTOR)
-		mfDataForSchemeId.PreviousDayValue = utils.RoundFloat64(response.PreviousDayNav*mfDataForSchemeId.Units, NET_VALUE_ROUNDING_FACTOR)
+		investmentsForSchemeId.CurrentValue = utils.RoundFloat64(response.CurrentNav*investmentsForSchemeId.Units, NET_VALUE_ROUNDING_FACTOR)
+		investmentsForSchemeId.InvestedValue = utils.RoundFloat64(investmentsForSchemeId.InvestedNav*investmentsForSchemeId.Units, NET_VALUE_ROUNDING_FACTOR)
+		investmentsForSchemeId.PreviousDayValue = utils.RoundFloat64(response.PreviousDayNav*investmentsForSchemeId.Units, NET_VALUE_ROUNDING_FACTOR)
 
-		mfDataForSchemeId.NetProfitLoss, mfDataForSchemeId.NetProfitLossPercentage = calculateProfitLoss(mfDataForSchemeId.InvestedValue, mfDataForSchemeId.CurrentValue)
-		mfDataForSchemeId.DayProfitLoss, mfDataForSchemeId.DayProfitLossPercentage = calculateProfitLoss(mfDataForSchemeId.PreviousDayValue, mfDataForSchemeId.CurrentValue)
+		investmentsForSchemeId.NetProfitLoss, investmentsForSchemeId.NetProfitLossPercentage = calculateProfitLoss(investmentsForSchemeId.InvestedValue, investmentsForSchemeId.CurrentValue)
+		investmentsForSchemeId.DayProfitLoss, investmentsForSchemeId.DayProfitLossPercentage = calculateProfitLoss(investmentsForSchemeId.PreviousDayValue, investmentsForSchemeId.CurrentValue)
 
-		mfDatumForSchemeId = append(mfDatumForSchemeId, mfDataForSchemeId)
+		datumForSchemeId = append(datumForSchemeId, investmentsForSchemeId)
 	}
 
-	return mfDatumForSchemeId
+	return datumForSchemeId
 }
+
+func getAllInvestments() InvestmentsResponse {
+	ctx := context.Background()
+
+	mfQueries := mutual_fund.New(db.DB_CONN)
+	schemeIds, err := mfQueries.ListDistinctMfInvestmentSchemeIds(ctx)
+	utils.CheckAndLogError(err, "")
+
+	var investmentsResponse InvestmentsResponse
+
+	for _, schemeId := range schemeIds {
+		investmentsForSchemeIdResponse := getInvestmentsBySchemeId(int(schemeId.Int32))
+		investmentsResponse.Investments = append(investmentsResponse.Investments, investmentsForSchemeIdResponse)
+	}
+
+	return investmentsResponse
+}
+
+// end
 
 // return the JSON response to be returned
 func listAllMfInvestments() MFInvestmentsApiResponse {

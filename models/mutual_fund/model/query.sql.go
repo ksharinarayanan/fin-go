@@ -49,6 +49,30 @@ func (q *Queries) CleanupMFNavDataBySchemeId(ctx context.Context, schemeID int32
 	return err
 }
 
+const listDistinctMfInvestmentSchemeIds = `-- name: ListDistinctMfInvestmentSchemeIds :many
+SELECT DISTINCT scheme_id FROM mf_investments
+`
+
+func (q *Queries) ListDistinctMfInvestmentSchemeIds(ctx context.Context) ([]pgtype.Int4, error) {
+	rows, err := q.db.Query(ctx, listDistinctMfInvestmentSchemeIds)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []pgtype.Int4
+	for rows.Next() {
+		var scheme_id pgtype.Int4
+		if err := rows.Scan(&scheme_id); err != nil {
+			return nil, err
+		}
+		items = append(items, scheme_id)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listMFInvestments = `-- name: ListMFInvestments :many
 SELECT id, scheme_id, nav, units, invested_at FROM mf_investments
 `

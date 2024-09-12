@@ -4,15 +4,15 @@ import "time"
 
 // contains the request and response types for /api/mf/ group
 
-type MFInvestmentBySchemeIdResponse struct {
-	SchemeId       int                 `json:"scheme_id"`
-	SchemeName     string              `json:"scheme_name"`
-	CurrentNav     float64             `json:"current_nav"`
-	PreviousDayNav float64             `json:"previous_day_nav"`
-	Investments    []MFDataForSchemeId `json:"investments"`
+type InvestmentsBySchemeIdResponse struct {
+	SchemeId       int                      `json:"scheme_id"`
+	SchemeName     string                   `json:"scheme_name"`
+	CurrentNav     float64                  `json:"current_nav"`
+	PreviousDayNav float64                  `json:"previous_day_nav"`
+	Investments    []InvestmentsForSchemeId `json:"investments"`
 }
 
-type MFDataForSchemeId struct {
+type InvestmentsForSchemeId struct {
 	Units       float64   `json:"units"`
 	InvestedAt  time.Time `json:"invested_at"`
 	InvestedNav float64   `json:"invested_nav"`
@@ -26,6 +26,12 @@ type MFDataForSchemeId struct {
 	NetProfitLoss           float64 `json:"net_profit_loss"`
 	DayProfitLoss           float64 `json:"day_profit_loss"`
 }
+
+type InvestmentsResponse struct {
+	Investments []InvestmentsBySchemeIdResponse `json:"investments"`
+}
+
+// end
 
 type MFInvestmentResponse struct {
 	// all the values and P/L percentages are derived values
