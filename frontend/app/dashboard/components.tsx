@@ -7,6 +7,7 @@ import {
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
+import { Table, TableCaption } from "@/components/ui/table";
 
 const formatCurrency = (value: number) => {
 	return new Intl.NumberFormat("en-IN", {
@@ -73,14 +74,6 @@ const MutualFundCard = ({
 							).toLocaleDateString()}
 						</p>
 					</div>
-					{/* <div>
-						<p className="text-sm">
-							Current NAV
-						</p>
-						<p className="text-lg font-semibold">
-							{formatCurrency(investment.current_nav)}
-						</p>
-					</div> */}
 					<div>
 						<p className="text-sm">Invested NAV</p>
 						<p className="text-lg font-semibold">
@@ -116,6 +109,9 @@ const MutualFundCard = ({
 	);
 };
 
+// please
+function InvestmentTable() {}
+
 export default function MutualFundAccordion({
 	mf,
 }: {
@@ -146,6 +142,9 @@ export default function MutualFundAccordion({
 			</AccordionTrigger>
 
 			<AccordionContent>
+				<Table>
+					<TableCaption>{mf.scheme_name}</TableCaption>
+				</Table>
 				{mf.investments.map((investment, i) => {
 					return <MutualFundCard key={i} investment={investment} />;
 				})}

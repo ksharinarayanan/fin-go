@@ -23,7 +23,11 @@ func CheckAndLogError(err error, msg string) {
 
 	errorMessage += err.Error()
 
-	log.Fatalln(errorMessage)
+	log.Println(errorMessage)
+}
+
+func LogError(err error) {
+	log.Println(err.Error())
 }
 
 func RemoveTimeFromDate(t time.Time) time.Time {
