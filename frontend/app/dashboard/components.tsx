@@ -1,13 +1,20 @@
-import { Calendar, TrendingDown, TrendingUp } from "lucide-react";
-import { MutualFundInvestment, MutualFundInvestmentDetails } from "./types";
-import { Card, CardContent } from "@/components/ui/card";
+import { TrendingDown, TrendingUp } from "lucide-react";
+import { MutualFundInvestment } from "./types";
 import { Badge } from "@/components/ui/badge";
 import {
 	AccordionContent,
 	AccordionItem,
 	AccordionTrigger,
 } from "@/components/ui/accordion";
-import { Table, TableCaption } from "@/components/ui/table";
+import {
+	Table,
+	TableBody,
+	TableCaption,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
+} from "@/components/ui/table";
 
 const formatCurrency = (value: number) => {
 	return new Intl.NumberFormat("en-IN", {
@@ -40,77 +47,64 @@ const ProfitLossBadge = ({
 			) : (
 				<TrendingDown className="w-3 h-3 mr-1" />
 			)}
-			{formatCurrency(Math.abs(value))} ({percentage.toFixed(2)}%)
+			{percentage.toFixed(2)}% ({formatCurrency(Math.abs(value))})
 		</Badge>
 	);
 };
 
-const MutualFundCard = ({
-	investment,
-}: {
-	investment: MutualFundInvestmentDetails;
-}) => {
+// please rename this to a better name
+function InvestmentTable({ mf }: { mf: MutualFundInvestment }) {
 	return (
-		<Card className="overflow-hidden transition-shadow hover:shadow-lg">
-			{/* <CardHeader className="bg-secondary">
-				<CardTitle className="text-lg font-bold">
-					{mf.scheme_name}
-				</CardTitle>
-			</CardHeader> */}
-			<CardContent className="p-4">
-				<div className="grid grid-cols-2 gap-4">
-					<div>
-						<p className="text-sm">Units</p>
-						<p className="text-lg font-semibold">
-							{investment.units.toFixed(2)}
-						</p>
-					</div>
-					<div>
-						<p className="text-sm">Invested On</p>
-						<p className="text-lg font-semibold flex items-center">
-							<Calendar className="w-4 h-4 mr-1" />
-							{new Date(
-								investment.invested_at
-							).toLocaleDateString()}
-						</p>
-					</div>
-					<div>
-						<p className="text-sm">Invested NAV</p>
-						<p className="text-lg font-semibold">
-							{formatCurrency(investment.invested_nav)}
-						</p>
-					</div>
-					<div className="col-span-2">
-						<p className="text-sm">Current Value</p>
-						<p className="text-xl font-bold flex items-center">
-							{formatCurrency(investment.current_value)}
-						</p>
-					</div>
-					<div className="col-span-2">
-						<p className="text-sm">Invested Value</p>
-						<p className="text-xl font-bold flex items-center">
-							{formatCurrency(investment.invested_value)}
-						</p>
-					</div>
-					<div className="col-span-2">
-						<p className="text-sm">Net Profit/Loss</p>
-						<div className="text-lg font-semibold flex items-center">
-							<ProfitLossBadge
-								value={investment.net_profit_loss}
-								percentage={
-									investment.net_profit_loss_percentage
-								}
-							/>
-						</div>
-					</div>
-				</div>
-			</CardContent>
-		</Card>
+		<Table>
+			<TableCaption>{mf.scheme_name}</TableCaption>
+			<TableHeader>
+				<TableRow>
+					<TableHead className="font-bold">Units</TableHead>
+					<TableHead className="font-bold">Invested On</TableHead>
+					<TableHead className="font-bold">Invested NAV</TableHead>
+					<TableHead className="font-bold">Invested value</TableHead>
+					<TableHead className="font-bold">Current value</TableHead>
+					<TableHead className="font-bold text-right">
+						Net Profit/Loss
+					</TableHead>
+				</TableRow>
+			</TableHeader>
+			<TableBody>
+				{mf.investments.map((investment, i) => {
+					return (
+						<TableRow key={i}>
+							<TableCell>{investment.units.toFixed(2)}</TableCell>
+							<TableCell>
+								{new Intl.DateTimeFormat("en-GB", {
+									day: "2-digit",
+									month: "short",
+									year: "numeric",
+								}).format(new Date(investment.invested_at))}
+							</TableCell>
+							<TableCell>
+								{formatCurrency(investment.invested_nav)}
+							</TableCell>
+							<TableCell>
+								{formatCurrency(investment.invested_value)}
+							</TableCell>
+							<TableCell>
+								{formatCurrency(investment.current_value)}
+							</TableCell>
+							<TableCell className="text-right">
+								<ProfitLossBadge
+									value={investment.net_profit_loss}
+									percentage={
+										investment.net_profit_loss_percentage
+									}
+								/>
+							</TableCell>
+						</TableRow>
+					);
+				})}
+			</TableBody>
+		</Table>
 	);
-};
-
-// please
-function InvestmentTable() {}
+}
 
 export default function MutualFundAccordion({
 	mf,
@@ -142,12 +136,7 @@ export default function MutualFundAccordion({
 			</AccordionTrigger>
 
 			<AccordionContent>
-				<Table>
-					<TableCaption>{mf.scheme_name}</TableCaption>
-				</Table>
-				{mf.investments.map((investment, i) => {
-					return <MutualFundCard key={i} investment={investment} />;
-				})}
+				<InvestmentTable mf={mf} />
 			</AccordionContent>
 		</AccordionItem>
 	);

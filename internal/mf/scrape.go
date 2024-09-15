@@ -9,6 +9,7 @@ import (
 	mutual_fund "fund-manager/models/mutual_fund/model"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 )
@@ -73,4 +74,41 @@ func ScrapeSchemeMetaData() {
 	elapsed := time.Since(start)
 
 	log.Printf("Processed in %v\n", elapsed)
+}
+
+// function to read all the mf_schemes data and dump it in json file for
+// front end to consume
+func DumpJsonFile() {
+	db.InitializeDatabase()
+	defer db.DB_CONN.Close()
+
+	rows, err := db.DB_CONN.Query(context.Background(), "SELECT * FROM mf_schemes")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	defer rows.Close()
+
+	var mfSchemes []mutual_fund.MfScheme
+
+	file, err := os.Create("mf_schemes.json")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer file.Close()
+
+	for rows.Next() {
+		var mfScheme mutual_fund.MfScheme
+		err := rows.Scan(&mfScheme.ID, &mfScheme.SchemeName)
+		if err != nil {
+			log.Fatal(err)
+		}
+		mfSchemes = append(mfSchemes, mfScheme)
+	}
+
+	err = json.NewEncoder(file).Encode(mfSchemes)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 }
