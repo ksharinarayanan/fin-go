@@ -2,14 +2,16 @@ package jobs
 
 import (
 	"context"
-	"fund-manager/db"
+	"fund-manager/internal/db"
 	"fund-manager/internal/mf"
 	"fund-manager/internal/utils"
 	mutual_fund "fund-manager/models/mutual_fund/model"
+	"log"
 )
 
 // clean existing data and populate yesterday's and today's NAV in the mf_nav_data
 func UpdateMfNavData() {
+	log.Println("Updating MF nav data")
 	// use transaction
 	tx, err := db.DB_CONN.Begin(context.Background())
 	utils.CheckAndLogError(err, "")
@@ -29,4 +31,5 @@ func UpdateMfNavData() {
 	}
 
 	tx.Commit(context.Background())
+	log.Println("Updated")
 }

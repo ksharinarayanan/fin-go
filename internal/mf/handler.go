@@ -2,7 +2,7 @@ package mf
 
 import (
 	"context"
-	"fund-manager/db"
+	"fund-manager/internal/db"
 	"fund-manager/internal/utils"
 	mutual_fund "fund-manager/models/mutual_fund/model"
 	"net/http"
