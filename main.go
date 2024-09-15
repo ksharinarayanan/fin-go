@@ -1,6 +1,6 @@
 package main
 
-import "fund-manager/internal/server"
+import "fin-go/internal/server"
 
 func main() {
 	server.StartServer()

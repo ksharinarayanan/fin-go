@@ -1,10 +1,10 @@
 package server
 
 import (
-	"fund-manager/internal/db"
-	"fund-manager/internal/jobs"
-	"fund-manager/internal/mf"
-	"fund-manager/internal/utils"
+	"fin-go/internal/db"
+	"fin-go/internal/jobs"
+	"fin-go/internal/mf"
+	"fin-go/internal/utils"
 
 	"github.com/labstack/echo/v4"
 )

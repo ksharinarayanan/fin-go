@@ -1,8 +1,8 @@
 package mf
 
 import (
-	"fund-manager/internal/utils"
-	mutual_fund "fund-manager/models/mutual_fund/model"
+	"fin-go/internal/utils"
+	mutual_fund "fin-go/models/mutual_fund/model"
 	"testing"
 	"time"
 

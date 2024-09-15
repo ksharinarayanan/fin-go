@@ -2,8 +2,8 @@ package mf
 
 import (
 	"encoding/json"
+	"fin-go/internal/utils"
 	"fmt"
-	"fund-manager/internal/utils"
 	"net/http"
 	"strconv"
 )

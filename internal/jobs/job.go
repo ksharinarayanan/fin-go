@@ -2,10 +2,10 @@ package jobs
 
 import (
 	"context"
-	"fund-manager/internal/db"
-	"fund-manager/internal/mf"
-	"fund-manager/internal/utils"
-	mutual_fund "fund-manager/models/mutual_fund/model"
+	"fin-go/internal/db"
+	"fin-go/internal/mf"
+	"fin-go/internal/utils"
+	mutual_fund "fin-go/models/mutual_fund/model"
 	"log"
 )
 

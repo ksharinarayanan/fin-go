@@ -3,10 +3,10 @@ package mf
 import (
 	"context"
 	"encoding/json"
+	"fin-go/internal/db"
+	"fin-go/internal/utils"
+	mutual_fund "fin-go/models/mutual_fund/model"
 	"fmt"
-	"fund-manager/internal/db"
-	"fund-manager/internal/utils"
-	mutual_fund "fund-manager/models/mutual_fund/model"
 	"log"
 	"net/http"
 	"os"

@@ -2,9 +2,9 @@ package mf
 
 import (
 	"context"
+	"fin-go/internal/utils"
+	mutual_fund "fin-go/models/mutual_fund/model"
 	"fmt"
-	"fund-manager/internal/utils"
-	mutual_fund "fund-manager/models/mutual_fund/model"
 	"strconv"
 	"time"
 )
