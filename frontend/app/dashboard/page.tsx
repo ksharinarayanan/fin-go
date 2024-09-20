@@ -25,8 +25,6 @@ const Dashboard = () => {
 				previousDayTotalValue += investmentDetail.previous_day_value;
 			}
 
-			console.log(currentTotalValue, investedTotalValue);
-
 			investment.net_profit_loss = round(
 				currentTotalValue - investedTotalValue
 			);
@@ -52,7 +50,6 @@ const Dashboard = () => {
 				}
 				const data: MutualFundInvestments = await response.json();
 				deriveValues(data.investments);
-				console.log(data.investments);
 				setMfInvestments(data.investments);
 			} catch (error) {
 				setError("Failed to fetch mutual fund data");

@@ -1,4 +1,4 @@
-package mf
+package mutual_fund
 
 import (
 	"context"
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type SchemeDataResponse struct {
+type SchemeMetadataResponse struct {
 	SchemeCode int    `json:"schemeCode"`
 	SchemeName string `json:"schemeName"`
 }
@@ -29,7 +29,7 @@ func ScrapeSchemeMetaData() {
 	}
 	defer response.Body.Close()
 
-	var schemeDatas []SchemeDataResponse
+	var schemeDatas []SchemeMetadataResponse
 	err = json.NewDecoder(response.Body).Decode(&schemeDatas)
 	if err != nil {
 		fmt.Println(err)

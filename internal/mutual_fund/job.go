@@ -1,9 +1,8 @@
-package jobs
+package mutual_fund
 
 import (
 	"context"
 	"fin-go/internal/db"
-	"fin-go/internal/mf"
 	"fin-go/internal/utils"
 	mutual_fund "fin-go/models/mutual_fund/model"
 	"log"
@@ -24,12 +23,22 @@ func UpdateMfNavData() {
 	mfInvestments, err := mfQueries.ListMFInvestments(context.Background())
 	utils.CheckAndLogError(err, "")
 
+	anyFailure := false
+
 	for i := range mfInvestments {
 		// remove any existing data for the scheme ID
 		mfQueries.CleanupMFNavDataBySchemeId(context.Background(), mfInvestments[i].SchemeID.Int32)
-		mf.PopulateData(mfQueries, mfInvestments[i])
+		err := populateData(mfQueries, mfInvestments[i])
+		if err != nil {
+			anyFailure = true
+			log.Printf("Error while populating data for %v: %v", mfInvestments[i].SchemeID, err)
+		}
 	}
 
 	tx.Commit(context.Background())
-	log.Println("Updated")
+	if anyFailure {
+		log.Println("Some updates failed")
+	}
+
+	log.Println("MF nav data updation job completed")
 }

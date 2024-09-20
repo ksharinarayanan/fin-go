@@ -1,13 +1,13 @@
 package utils
 
-type RequestResponse struct {
-	Result string `json:"message"`
+type Response struct {
+	Message string `json:"message"`
 }
 
-var BadRequestResponse = RequestResponse{
-	Result: "Bad request",
+var BadRequestResponse = Response{
+	Message: "Bad request",
 }
 
-var InternalServerResponse = RequestResponse{
-	Result: "Internal server error occurred",
+var InternalServerResponse = Response{
+	Message: "Internal server error occurred",
 }

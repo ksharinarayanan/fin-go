@@ -1,4 +1,4 @@
-package mf
+package mutual_fund
 
 const BASE_MF_API_URL string = "https://api.mfapi.in/mf/"
 

@@ -1,4 +1,4 @@
-package mf
+package mutual_fund
 
 import (
 	"fin-go/internal/utils"

@@ -1,8 +1,8 @@
-package mf
+package mutual_fund
 
 import "time"
 
-// contains the request and response types for /api/mf/ group
+// contains the response types for /api/mf/ group
 
 type InvestmentsBySchemeIdResponse struct {
 	SchemeId       int                    `json:"scheme_id"`
@@ -29,4 +29,11 @@ type InvestmentsForScheme struct {
 
 type InvestmentsResponse struct {
 	Investments []InvestmentsBySchemeIdResponse `json:"investments"`
+}
+
+type SchemeDataResponse struct {
+	SchemeCode int     `json:"schemeCode"`
+	SchemeName string  `json:"schemeName"`
+	CurrentNav float64 `json:"currentNav"`
+	Date       string  `json:"date"`
 }

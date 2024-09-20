@@ -1,9 +1,8 @@
-package mf
+package externalapi
 
 import (
 	"encoding/json"
-	"fin-go/internal/utils"
-	"fmt"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -27,24 +26,27 @@ type NavData struct {
 	Nav  string `json:"nav"`
 }
 
-func apiRequest(schemeId int, latest bool) MFResponse {
+const BASE_MF_API_URL string = "https://api.mfapi.in/mf/"
+
+func MakeApiRequest(schemeId int, latest bool) (MFResponse, error) {
 	api_url := BASE_MF_API_URL + strconv.Itoa(schemeId)
 	if latest {
 		api_url += "/latest"
 	}
+	var mfResponse MFResponse
 
 	response, err := http.Get(api_url)
 	if err != nil {
-		utils.CheckAndLogError(err, fmt.Sprintf("Failed to hit MF API %v: %v\n", api_url, err.Error()))
+		log.Println(err.Error())
+		return mfResponse, err
 	}
 
 	defer response.Body.Close()
 
-	var mfResponse MFResponse
 	err = json.NewDecoder(response.Body).Decode(&mfResponse)
 	if err != nil {
-		utils.CheckAndLogError(err, fmt.Sprintf("Error parsing the MF API %v: %v\n", api_url, err.Error()))
+		return mfResponse, err
 	}
 
-	return mfResponse
+	return mfResponse, nil
 }

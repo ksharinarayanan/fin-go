@@ -1,4 +1,4 @@
-package mf
+package mutual_fund
 
 import (
 	"github.com/labstack/echo/v4"
@@ -10,6 +10,7 @@ func RegisterRoutes(e *echo.Echo) {
 
 	mfRouteGroup.Use(middleware.CORS())
 
-	mfRouteGroup.GET("/", BaseRouteHandler)
-	mfRouteGroup.GET("/:schemeId", GetMfInvestmentHandler)
+	mfRouteGroup.GET("/", baseRouteHandler)
+	mfRouteGroup.GET("/:schemeId", getMfInvestmentHandler)
+	mfRouteGroup.GET("/schemes/:schemeId", getMfSchemeHandler)
 }
