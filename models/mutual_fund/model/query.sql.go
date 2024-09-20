@@ -12,7 +12,7 @@ import (
 )
 
 const addMFInvestment = `-- name: AddMFInvestment :exec
-INSERT INTO mf_investments (scheme_id, nav, units, invested_at) VALUES ($1, $2, $3, $4)
+INSERT INTO mf_investments (scheme_id, nav, units, invested_at, created_at) VALUES ($1, $2, $3, $4, now())
 `
 
 type AddMFInvestmentParams struct {
@@ -33,7 +33,7 @@ func (q *Queries) AddMFInvestment(ctx context.Context, arg AddMFInvestmentParams
 }
 
 const addMFNavData = `-- name: AddMFNavData :exec
-INSERT INTO mf_nav_data (scheme_id, nav_date, nav) VALUES ($1, $2, $3)
+INSERT INTO mf_nav_data (scheme_id, nav_date, nav, created_at) VALUES ($1, $2, $3, now())
 `
 
 type AddMFNavDataParams struct {
@@ -95,7 +95,7 @@ func (q *Queries) ListDistinctMfInvestmentSchemeIds(ctx context.Context) ([]pgty
 }
 
 const listMFInvestments = `-- name: ListMFInvestments :many
-SELECT id, scheme_id, nav, units, invested_at FROM mf_investments
+SELECT id, scheme_id, nav, units, invested_at, created_at FROM mf_investments
 `
 
 func (q *Queries) ListMFInvestments(ctx context.Context) ([]MfInvestment, error) {
@@ -113,6 +113,7 @@ func (q *Queries) ListMFInvestments(ctx context.Context) ([]MfInvestment, error)
 			&i.Nav,
 			&i.Units,
 			&i.InvestedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -125,7 +126,7 @@ func (q *Queries) ListMFInvestments(ctx context.Context) ([]MfInvestment, error)
 }
 
 const listMFInvestmentsBySchemeId = `-- name: ListMFInvestmentsBySchemeId :many
-SELECT id, scheme_id, nav, units, invested_at FROM mf_investments WHERE scheme_id = $1
+SELECT id, scheme_id, nav, units, invested_at, created_at FROM mf_investments WHERE scheme_id = $1
 `
 
 func (q *Queries) ListMFInvestmentsBySchemeId(ctx context.Context, schemeID pgtype.Int4) ([]MfInvestment, error) {
@@ -143,6 +144,7 @@ func (q *Queries) ListMFInvestmentsBySchemeId(ctx context.Context, schemeID pgty
 			&i.Nav,
 			&i.Units,
 			&i.InvestedAt,
+			&i.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
@@ -155,7 +157,7 @@ func (q *Queries) ListMFInvestmentsBySchemeId(ctx context.Context, schemeID pgty
 }
 
 const listMFNavData = `-- name: ListMFNavData :one
-SELECT scheme_id, nav_date, nav FROM mf_nav_data WHERE scheme_id = $1 AND nav_date = $2
+SELECT scheme_id, nav_date, nav, created_at FROM mf_nav_data WHERE scheme_id = $1 AND nav_date = $2
 `
 
 type ListMFNavDataParams struct {
@@ -166,12 +168,17 @@ type ListMFNavDataParams struct {
 func (q *Queries) ListMFNavData(ctx context.Context, arg ListMFNavDataParams) (MfNavDatum, error) {
 	row := q.db.QueryRow(ctx, listMFNavData, arg.SchemeID, arg.NavDate)
 	var i MfNavDatum
-	err := row.Scan(&i.SchemeID, &i.NavDate, &i.Nav)
+	err := row.Scan(
+		&i.SchemeID,
+		&i.NavDate,
+		&i.Nav,
+		&i.CreatedAt,
+	)
 	return i, err
 }
 
 const listMFNavDataBySchemeId = `-- name: ListMFNavDataBySchemeId :many
-SELECT scheme_id, nav_date, nav FROM mf_nav_data WHERE scheme_id = $1 ORDER BY nav_date DESC
+SELECT scheme_id, nav_date, nav, created_at FROM mf_nav_data WHERE scheme_id = $1 ORDER BY nav_date DESC
 `
 
 func (q *Queries) ListMFNavDataBySchemeId(ctx context.Context, schemeID int32) ([]MfNavDatum, error) {
@@ -183,7 +190,12 @@ func (q *Queries) ListMFNavDataBySchemeId(ctx context.Context, schemeID int32) (
 	var items []MfNavDatum
 	for rows.Next() {
 		var i MfNavDatum
-		if err := rows.Scan(&i.SchemeID, &i.NavDate, &i.Nav); err != nil {
+		if err := rows.Scan(
+			&i.SchemeID,
+			&i.NavDate,
+			&i.Nav,
+			&i.CreatedAt,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -6,6 +6,7 @@ import (
 	"fin-go/internal/utils"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func StartServer() {
@@ -13,12 +14,13 @@ func StartServer() {
 	defer db.DB_CONN.Close()
 
 	// TODO: convert this to cron job
-	mutual_fund.UpdateMfNavData()
+	err := mutual_fund.UpdateMfNavData()
+	utils.CheckAndLogError(err, "Error while updating MF nav data: ")
 
 	e := echo.New()
 
+	e.Use(middleware.Logger())
 	mutual_fund.RegisterRoutes(e)
 
-	err := e.Start(":8080")
-	utils.CheckAndLogError(err, "")
+	e.Start(":8080")
 }

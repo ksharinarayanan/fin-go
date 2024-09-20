@@ -3,17 +3,18 @@ package mutual_fund
 import (
 	"context"
 	"fin-go/internal/db"
-	"fin-go/internal/utils"
 	mutual_fund "fin-go/models/mutual_fund/model"
 	"log"
 )
 
 // clean existing data and populate yesterday's and today's NAV in the mf_nav_data
-func UpdateMfNavData() {
+func UpdateMfNavData() error {
 	log.Println("Updating MF nav data")
 	// use transaction
 	tx, err := db.DB_CONN.Begin(context.Background())
-	utils.CheckAndLogError(err, "")
+	if err != nil {
+		return err
+	}
 
 	defer tx.Rollback(context.Background())
 
@@ -21,7 +22,9 @@ func UpdateMfNavData() {
 
 	// get all the schemes that's being tracked
 	mfInvestments, err := mfQueries.ListMFInvestments(context.Background())
-	utils.CheckAndLogError(err, "")
+	if err != nil {
+		return err
+	}
 
 	anyFailure := false
 
@@ -41,4 +44,5 @@ func UpdateMfNavData() {
 	}
 
 	log.Println("MF nav data updation job completed")
+	return nil
 }

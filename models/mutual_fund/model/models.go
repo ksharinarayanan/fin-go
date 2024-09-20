@@ -14,12 +14,14 @@ type MfInvestment struct {
 	Nav        pgtype.Numeric
 	Units      pgtype.Numeric
 	InvestedAt pgtype.Date
+	CreatedAt  pgtype.Date
 }
 
 type MfNavDatum struct {
-	SchemeID int32
-	NavDate  pgtype.Date
-	Nav      pgtype.Numeric
+	SchemeID  int32
+	NavDate   pgtype.Date
+	Nav       pgtype.Numeric
+	CreatedAt pgtype.Date
 }
 
 type MfScheme struct {

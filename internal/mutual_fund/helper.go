@@ -17,8 +17,15 @@ func populateData(mfQueries *mutual_fund.Queries, mfInvestment mutual_fund.MfInv
 		return err
 	}
 
-	mfQueries.AddMFNavData(context.Background(), yesterdayMfNavData)
-	mfQueries.AddMFNavData(context.Background(), todayMfNavData)
+	err = mfQueries.AddMFNavData(context.Background(), yesterdayMfNavData)
+	if err != nil {
+		return err
+	}
+
+	err = mfQueries.AddMFNavData(context.Background(), todayMfNavData)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

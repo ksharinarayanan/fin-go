@@ -15,15 +15,17 @@ import (
 )
 
 // returns all the data related to MF investments
-func baseRouteHandler(c echo.Context) error {
+func allInvestmentsHandler(c echo.Context) error {
 	mfInvestmentsApiResponse, err := getAllInvestments()
 	if err != nil {
+		log.Println("Error while getting all investments: ", err.Error())
 		return c.JSON(http.StatusInternalServerError, utils.InternalServerResponse)
 	}
 
 	return c.JSON(http.StatusOK, mfInvestmentsApiResponse)
 }
 
+// gets the data related to a particular scheme
 func getMfSchemeHandler(c echo.Context) error {
 	schemeIdParam := c.Param("schemeId")
 	schemeId, err := strconv.Atoi(schemeIdParam)
@@ -45,10 +47,41 @@ func getMfSchemeHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, schemeData)
 }
 
+// adds a new investment
 func addInvestmentHandler(c echo.Context) error {
-	// post request
+	var request AddInvestmentRequest
+	err := c.Bind(&request)
+	if err != nil {
+		log.Println(err.Error())
+		return c.JSON(http.StatusBadRequest, utils.BadRequestResponse)
+	}
 
-	return nil
+	// json stringify sends the API request in UTC time
+	request.InvestedAt = request.InvestedAt.Local()
+
+	addMFInvestmentParams := mutual_fund.AddMFInvestmentParams{
+		SchemeID: utils.IntToPgInt4(request.SchemeID),
+		Nav:      utils.Float64ToPgNumeric(request.Nav),
+		Units:    utils.Float64ToPgNumeric(request.Units),
+		InvestedAt: utils.TimeToPgDate(
+			utils.RemoveTimeFromDate(request.InvestedAt)),
+	}
+
+	mfQueries := mutual_fund.New(db.DB_CONN)
+	err = mfQueries.AddMFInvestment(context.Background(), addMFInvestmentParams)
+
+	if err != nil {
+		log.Println("Error occurred while adding a new investment " + err.Error())
+		return c.JSON(http.StatusInternalServerError, utils.InternalServerResponse)
+	}
+
+	err = UpdateMfNavData()
+	if err != nil {
+		log.Println("Error occurred while updating MF NAV data " + err.Error())
+		return c.JSON(http.StatusInternalServerError, utils.InternalServerResponse)
+	}
+
+	return c.JSON(http.StatusOK, utils.SuccessResponse)
 }
 
 func getInvestmentsBySchemeId(schemeId int) (InvestmentsBySchemeIdResponse, error) {

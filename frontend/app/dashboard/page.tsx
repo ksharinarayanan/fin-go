@@ -44,10 +44,9 @@ const Dashboard = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const response = await fetch(
-					"http://localhost:8080/api/mf/investments"
-				);
+				const response = await fetch("/backend/api/mf/investments");
 				if (!response.ok) {
+					alert("Bad");
 					throw new Error("Network response was not ok");
 				}
 				const data: MutualFundInvestments = await response.json();
@@ -55,6 +54,7 @@ const Dashboard = () => {
 				setMfInvestments(data.investments);
 			} catch (error) {
 				setError("Failed to fetch mutual fund data");
+				alert(error);
 				console.error("Error fetching mutual fund data:", error);
 			} finally {
 				setIsLoading(false);

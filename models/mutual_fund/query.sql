@@ -14,10 +14,10 @@ SELECT * FROM mf_investments WHERE scheme_id = $1;
 SELECT * FROM mf_investments;
 
 -- name: AddMFInvestment :exec
-INSERT INTO mf_investments (scheme_id, nav, units, invested_at) VALUES ($1, $2, $3, $4);
+INSERT INTO mf_investments (scheme_id, nav, units, invested_at, created_at) VALUES ($1, $2, $3, $4, now());
 
 -- name: AddMFNavData :exec
-INSERT INTO mf_nav_data (scheme_id, nav_date, nav) VALUES ($1, $2, $3);
+INSERT INTO mf_nav_data (scheme_id, nav_date, nav, created_at) VALUES ($1, $2, $3, now());
 
 -- name: ListMFNavData :one
 SELECT * FROM mf_nav_data WHERE scheme_id = $1 AND nav_date = $2;
