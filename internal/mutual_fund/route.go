@@ -10,7 +10,8 @@ func RegisterRoutes(e *echo.Echo) {
 
 	mfRouteGroup.Use(middleware.CORS())
 
-	mfRouteGroup.GET("/", baseRouteHandler)
-	mfRouteGroup.GET("/:schemeId", getMfInvestmentHandler)
+	mfRouteGroup.GET("/investments", baseRouteHandler)
+	mfRouteGroup.POST("/investments/add", addInvestmentHandler)
+
 	mfRouteGroup.GET("/schemes/:schemeId", getMfSchemeHandler)
 }

@@ -24,29 +24,6 @@ func baseRouteHandler(c echo.Context) error {
 	return c.JSON(http.StatusOK, mfInvestmentsApiResponse)
 }
 
-func getMfInvestmentHandler(c echo.Context) error {
-	schemeIdParam := c.Param("schemeId")
-	schemeId, err := strconv.Atoi(schemeIdParam)
-	if err != nil {
-		return c.JSON(http.StatusBadRequest, utils.Response{
-			Message: "invalid scheme ID",
-		})
-	}
-
-	response, err := getInvestmentsBySchemeId(schemeId)
-	if err != nil {
-		log.Println(err.Error())
-		if err == ErrInvalidSchemeId || err == ErrNoInvestmentsForSchemeId {
-			return c.JSON(http.StatusBadRequest, utils.Response{
-				Message: err.Error(),
-			})
-		}
-		return c.JSON(http.StatusInternalServerError, utils.InternalServerResponse)
-	}
-
-	return c.JSON(http.StatusOK, response)
-}
-
 func getMfSchemeHandler(c echo.Context) error {
 	schemeIdParam := c.Param("schemeId")
 	schemeId, err := strconv.Atoi(schemeIdParam)
@@ -66,6 +43,12 @@ func getMfSchemeHandler(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, schemeData)
+}
+
+func addInvestmentHandler(c echo.Context) error {
+	// post request
+
+	return nil
 }
 
 func getInvestmentsBySchemeId(schemeId int) (InvestmentsBySchemeIdResponse, error) {

@@ -11,6 +11,27 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addMFInvestment = `-- name: AddMFInvestment :exec
+INSERT INTO mf_investments (scheme_id, nav, units, invested_at) VALUES ($1, $2, $3, $4)
+`
+
+type AddMFInvestmentParams struct {
+	SchemeID   pgtype.Int4
+	Nav        pgtype.Numeric
+	Units      pgtype.Numeric
+	InvestedAt pgtype.Date
+}
+
+func (q *Queries) AddMFInvestment(ctx context.Context, arg AddMFInvestmentParams) error {
+	_, err := q.db.Exec(ctx, addMFInvestment,
+		arg.SchemeID,
+		arg.Nav,
+		arg.Units,
+		arg.InvestedAt,
+	)
+	return err
+}
+
 const addMFNavData = `-- name: AddMFNavData :exec
 INSERT INTO mf_nav_data (scheme_id, nav_date, nav) VALUES ($1, $2, $3)
 `

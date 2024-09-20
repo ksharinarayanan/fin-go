@@ -44,7 +44,9 @@ const Dashboard = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
-				const response = await fetch("http://localhost:8080/api/mf/");
+				const response = await fetch(
+					"http://localhost:8080/api/mf/investments"
+				);
 				if (!response.ok) {
 					throw new Error("Network response was not ok");
 				}

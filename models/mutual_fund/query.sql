@@ -13,6 +13,9 @@ SELECT * FROM mf_investments WHERE scheme_id = $1;
 -- name: ListMFInvestments :many
 SELECT * FROM mf_investments;
 
+-- name: AddMFInvestment :exec
+INSERT INTO mf_investments (scheme_id, nav, units, invested_at) VALUES ($1, $2, $3, $4);
+
 -- name: AddMFNavData :exec
 INSERT INTO mf_nav_data (scheme_id, nav_date, nav) VALUES ($1, $2, $3);
 
